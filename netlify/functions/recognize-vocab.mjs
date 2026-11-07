@@ -34,15 +34,17 @@ export default async function handler(request) {
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),53000);
  let result;
  try{
-  const response=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',{
+  const response=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',{
    method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':secret},signal:controller.signal,
    body:JSON.stringify({contents:[{role:'user',parts:contents}],generationConfig:{responseMimeType:'application/json',responseSchema:schema,maxOutputTokens:12000,temperature:0}})
   });
   result=await response.json();
-  if(!response.ok){console.error('Gemini error',response.status,String(result?.error?.status||''));
-   if(response.status===429)return json({error:'Gemini 무료 사용 한도에 도달했습니다. 나중에 다시 시도하세요.'},429);
+  if(!response.ok){console.error('Gemini error',response.status,String(result?.error?.status||''),String(result?.error?.message||'').slice(0,500));
+   if(response.status===429)return json({error:'Gemini 무료 사용 한도에 도달했습니다. 한도 초기화 후 다시 시도하세요.'},429);
+   if(response.status===404)return json({error:'Gemini 모델을 찾을 수 없거나 이 프로젝트에서 사용할 수 없습니다. 서버 모델 설정을 확인하세요.'},502);
    if(response.status===400)return json({error:'파일 형식을 AI가 처리하지 못했습니다. PDF나 PNG/JPG로 변환해서 시도하세요.'},422);
    if(response.status===401||response.status===403)return json({error:'Gemini API 키 또는 프로젝트 접근 권한을 확인하세요.'},502);
+   if(response.status===503)return json({error:'Gemini 서버가 일시적으로 응답하지 않습니다. 잠시 후 다시 시도하세요.'},503);
    return json({error:'Gemini 처리 중 오류가 발생했습니다. 설정 또는 AI 사용 한도를 확인하세요.'},502);
   }
  }catch(e){console.error('Gemini request failed',String(e));return json({error:'AI 요청 시간이 초과되거나 연결에 실패했습니다. 파일을 나누어 시도하세요.'},504)}finally{clearTimeout(timer)}
