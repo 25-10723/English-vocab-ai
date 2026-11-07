@@ -10,13 +10,67 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icon-180.png">
-<title>단어연습장 Gemini 무료 AI V12 — 영어 5지선다</title>
+<title>영어단어장</title>
 <link rel="stylesheet" href="./styles.css">
+<style>
+/* V18 mobile UI override. Keep the existing app and API scripts intact. */
+.app{padding-bottom:calc(92px + env(safe-area-inset-bottom))!important}
+.hero h1{margin:0;font-size:clamp(27px,5vw,33px);line-height:1.35;letter-spacing:-1px}
+.hero .mini-stats{margin-top:24px}
+.nav{position:fixed!important;left:max(15px,calc((100vw - 690px)/2 + 14px))!important;right:auto!important;bottom:calc(16px + env(safe-area-inset-bottom))!important;width:auto!important;padding:0!important;display:block!important;background:transparent!important;border:0!important;backdrop-filter:none!important;transform:none!important;z-index:40!important;overflow:visible!important}
+.nav .float-menu-toggle{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#141b2b;border:1px solid var(--accent2);border-radius:999px;padding:12px 17px;font-size:14px;font-weight:800;box-shadow:0 7px 22px rgba(0,0,0,.32);white-space:nowrap;min-height:48px;flex:none}
+.nav .float-menu-icon{display:inline;font-size:17px;line-height:1;margin:0}
+.nav .float-menu-panel{position:absolute;left:0;bottom:calc(100% + 10px);display:grid;gap:5px;width:min(220px,calc(100vw - 30px));padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:17px;box-shadow:0 12px 40px rgba(0,0,0,.42);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(8px);transition:opacity .15s,transform .15s,visibility .15s}
+body.menu-open .nav .float-menu-panel{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0)}
+.nav .float-menu-panel button{display:flex;align-items:center;gap:12px;width:100%;flex:none;text-align:left;min-height:47px;font-size:14px;padding:10px 13px;color:var(--text);background:transparent;border:0;border-radius:11px}
+.nav .float-menu-panel button span{display:inline-block;margin:0;width:22px;font-size:21px;text-align:center}
+.nav .float-menu-panel button.active{color:var(--accent2);background:#263249}
+body.light .nav .float-menu-toggle{color:#fff}
+body.light .nav .float-menu-panel{background:#fff}
+body.light .nav .float-menu-panel button{color:#24334e}
+body.light .nav .float-menu-panel button.active{background:#dfe8fa;color:#254788}
+body.keyboard-open .nav{display:none!important}
+body.keyboard-open .app{padding-bottom:24px!important}
+@media(max-width:380px){.nav{left:13px!important}.nav .float-menu-toggle{padding:11px 14px}}
+@media(prefers-reduced-motion:reduce){.nav .float-menu-panel{transition:none}}
+</style>
 </head>
 <body>
 <div class="app"><header><div class="logo"><span class="logo-symbol">A</span><span>단어연습장</span></div><button class="head-action" id="settings-trigger" data-action="settings" title="길게 누르면 전체화면 안내">설정 · 백업</button></header><main id="content" aria-live="polite"></main></div>
-<nav class="nav" id="nav" aria-label="하단 메뉴"></nav>
+<nav class="nav" id="nav" aria-label="이동 메뉴"></nav>
 <script src="./vocabulary-data.js"></script>
 <script src="./app.js"></script>
+<script>
+/* Small UI override: reuses existing navigation actions and page renderers. */
+(function(){
+  const previousHome = home;
+  home = function(){
+    return previousHome().replace(
+      '<div class="eyebrow">VOCABULARY PRACTICE</div><h1>하루 몇 분,<br>아는 단어는 넘기고.</h1><p>영어 단어를 보고 한국어 뜻 5개 중<br>정답을 고르는 간단한 암기 테스트</p>',
+      '<h1>영어단어장</h1>'
+    );
+  };
+  nav = function(){
+    const items=[['home','⌂','홈'],['book','▤','챕터'],['words','✓','단어 관리'],['import','＋','추가']];
+    document.querySelector('#nav').innerHTML =
+      '<div class="float-menu-panel" aria-label="이동 메뉴">' +
+      items.map(([v,ic,label])=>'<button type="button" data-action="nav-'+v+'" class="'+(((v==='book'&&['quiz','study','result'].includes(app.view))||app.view===v)?'active':'')+'"><span>'+ic+'</span>'+label+'</button>').join('')+
+      '</div><button type="button" class="float-menu-toggle" id="float-menu-toggle" aria-label="메뉴 열기" aria-expanded="false"><span class="float-menu-icon">☰</span> 메뉴</button>';
+    document.body.classList.remove('menu-open');
+  };
+  document.addEventListener('click',function(e){
+    const toggle=e.target.closest('#float-menu-toggle');
+    if(toggle){
+      const open=document.body.classList.toggle('menu-open');
+      toggle.setAttribute('aria-expanded',String(open));
+      toggle.setAttribute('aria-label',open?'메뉴 닫기':'메뉴 열기');
+    }else if(!e.target.closest('#nav')){
+      document.body.classList.remove('menu-open');
+    }
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')document.body.classList.remove('menu-open')});
+  render();
+})();
+</script>
 </body>
 </html>
